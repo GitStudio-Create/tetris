@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON TETRIS | モダン・テトリス</title>
+    <meta name="description" content="ブラウザで簡単に遊べる、美しくモダンなデザインのテトリスゲームです。スコア機能や次のブロックのプレビュー機能があります。">
+    <!-- Google Fonts のインポート (モダンなフォント) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header-container">
+            <h1 class="game-title">NEON TETRIS</h1>
+            <button id="mute-btn" class="mute-btn" aria-label="ミュート切り替え" title="ミュート切り替え">
+                <svg id="mute-icon" class="mute-svg" viewBox="0 0 24 24" width="24" height="24">
+                    <path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+        </header>
+
+        <main class="game-container">
+            <!-- ゲーム盤 (Canvas) とオーバーレイ -->
+            <div class="canvas-wrapper">
+                <canvas id="tetris-board" width="300" height="600"></canvas>
+                <div id="game-overlay" class="overlay">
+                    <div class="overlay-content">
+                        <h2 id="overlay-title">NEON TETRIS</h2>
+                        <p id="overlay-msg">スコアを伸ばしてハイスコアを目指そう！</p>
+                        <button id="start-btn">PLAY GAME</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- スマホ用仮想コントローラー (CSSでPC時は非表示) -->
+            <div id="mobile-controls" class="mobile-controls">
+                <div class="control-group movement-group">
+                    <button id="btn-rotate" class="btn-ctrl btn-action" aria-label="回転">↻</button>
+                    <button id="btn-left" class="btn-ctrl" aria-label="左移動">←</button>
+                </div>
+                <div class="control-group action-group">
+                    <button id="btn-pause" class="btn-ctrl btn-action btn-pause" aria-label="一時停止">PAUSE</button>
+                    <button id="btn-down" class="btn-ctrl" aria-label="ソフトドロップ">↓</button>
+                    <button id="btn-right" class="btn-ctrl" aria-label="右移動">→</button>
+                </div>
+            </div>
+
+            <!-- 情報パネル・サイドバー -->
+            <div class="sidebar">
+                <!-- 次のブロック表示 -->
+                <div class="panel next-panel">
+                    <h3>NEXT</h3>
+                    <div class="next-canvas-wrapper">
+                        <canvas id="next-board" width="120" height="120"></canvas>
+                    </div>
+                </div>
+
+                <!-- スコアとレベル -->
+                <div class="panel info-panel">
+                    <div class="info-item">
+                        <span class="info-label">HI-SCORE</span>
+                        <span id="high-score" class="info-value">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">SCORE</span>
+                        <span id="score" class="info-value">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">LEVEL</span>
+                        <span id="level" class="info-value">1</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">LINES</span>
+                        <span id="lines" class="info-value">0</span>
+                    </div>
+                </div>
+
+                <!-- 操作方法 -->
+                <div class="panel controls-panel">
+                    <h3>CONTROLS</h3>
+                    <div class="controls-list">
+                        <div class="control-row">
+                            <span class="key-cap">←</span>
+                            <span class="key-cap">→</span>
+                            <span class="control-desc">移動</span>
+                        </div>
+                        <div class="control-row">
+                            <span class="key-cap">↑</span>
+                            <span class="control-desc">一時停止</span>
+                        </div>
+                        <div class="control-row">
+                            <span class="key-cap">↓</span>
+                            <span class="control-desc">ソフトドロップ</span>
+                        </div>
+                        <div class="control-row">
+                            <span class="key-cap space-key">Space</span>
+                            <span class="control-desc">回転</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

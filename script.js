@@ -90,9 +90,12 @@ const btnRotate = document.getElementById('btn-rotate');
 const btnPause = document.getElementById('btn-pause');
 const controlModeDialog = document.getElementById('control-mode-dialog');
 const changeControlModeBtn = document.getElementById('change-control-mode');
+const tapZones = document.getElementById('tap-zones');
 const mobileQuery = window.matchMedia('(max-width: 680px)');
 let controlMode = localStorage.getItem('tetris-control-mode');
 let startAfterModeSelection = false;
+const HIGH_SCORE_KEY = 'neonTetrisHighScore';
+const LEGACY_HIGH_SCORE_KEY = 'tetris-high-score';
 
 // ----------------------------------------------------
 // 3. ゲームの変数（状態）の定義
@@ -505,6 +508,23 @@ function updateUI() {
     linesEl.textContent = lines;
 }
 
+function readHighScore() {
+    const savedScore = parseInt(localStorage.getItem(HIGH_SCORE_KEY), 10);
+    if (Number.isFinite(savedScore)) return savedScore;
+
+    const legacyScore = parseInt(localStorage.getItem(LEGACY_HIGH_SCORE_KEY), 10) || 0;
+    if (legacyScore > 0) localStorage.setItem(HIGH_SCORE_KEY, String(legacyScore));
+    return legacyScore;
+}
+
+function saveHighScoreIfNeeded() {
+    const savedScore = parseInt(localStorage.getItem(HIGH_SCORE_KEY), 10) || 0;
+    if (score > savedScore) {
+        localStorage.setItem(HIGH_SCORE_KEY, String(score));
+    }
+    highScore = Math.max(highScore, score, savedScore);
+}
+
 // 現在のレベルに応じた自動落下の間隔（ミリ秒）を取得する関数
 function getDropInterval() {
     // レベルが上がるにつれて等比級数的に速度を上げる (L1: 1000ms, L2: 750ms, L3: 562ms... 下限は 80ms)
@@ -568,7 +588,19 @@ function togglePause() {
 
     if (isPaused) {
         overlayTitle.textContent = "PAUSED";
-        overlayMsg.textContent = "上矢印キーまたはボタンを押してゲームを再開します";
+        if (mobileQuery.matches && controlMode === 'tap') {
+            overlayMsg.innerHTML = `
+                <span>タップ操作ガイド</span>
+                <span class="tap-help">
+                    <span class="wide">↻ 上エリア：回転</span>
+                    <span>← 左エリア：左移動</span>
+                    <span>右エリア：右移動 →</span>
+                    <span class="wide">↓ 下エリア：ソフトドロップ</span>
+                </span>
+                <span class="tap-help-note">ダブルタップ回転は無効です</span>`;
+        } else {
+            overlayMsg.textContent = "上矢印キーまたはボタンを押してゲームを再開します";
+        }
         startBtn.textContent = "RESUME";
         overlay.classList.remove('hidden');
 
@@ -595,10 +627,7 @@ function endGame() {
     overlay.classList.remove('hidden');
 
     // ハイスコアを超えていたらLocalStorageに保存する
-    if (score >= highScore) {
-        highScore = score;
-        localStorage.setItem('tetris-high-score', highScore);
-    }
+    saveHighScoreIfNeeded();
     updateUI();
 
     // ゲームオーバー時はBGMを止めて、ゲームオーバー用のBGMを流す
@@ -717,7 +746,7 @@ muteBtn.addEventListener('click', () => {
 // 12. ゲームの初回表示設定とハイスコア読み込み
 // ----------------------------------------------------
 // LocalStorage から過去のハイスコアを読み込む
-highScore = parseInt(localStorage.getItem('tetris-high-score')) || 0;
+highScore = readHighScore();
 updateUI();
 
 // スマホ用タッチ操作ボタンのイベント設定用ヘルパー関数
@@ -831,92 +860,19 @@ function runTouchAction(action, allowPaused = false) {
     draw();
 }
 
-function bindSwipeControls() {
-    const touchSurface = canvas.parentElement;
-    if (!touchSurface || !window.PointerEvent) return;
+function bindTapZones() {
+    if (!tapZones) return;
 
-    const minSwipeDistance = 30;
-    const tapDistance = 14;
-    let touchStart = null;
-    let holdDelay = null;
-    let holdRepeat = null;
-    let tapDelay = null;
-    let lastTapTime = 0;
+    const actions = { left: moveLeft, right: moveRight, down: pieceDrop, rotate: pieceRotate };
+    tapZones.querySelectorAll('[data-tap-action]').forEach(zone => {
+        const actionName = zone.dataset.tapAction;
+        const action = actions[actionName];
 
-    const stopTouchRepeat = () => {
-        clearTimeout(holdDelay);
-        clearInterval(holdRepeat);
-        holdDelay = null;
-        holdRepeat = null;
-    };
-
-    touchSurface.addEventListener('pointerdown', event => {
-        if (event.pointerType !== 'touch' || event.target.closest('button') || controlMode !== 'tap') return;
-
-        touchStart = {
-            id: event.pointerId,
-            x: event.clientX,
-            y: event.clientY,
-            held: false
-        };
-        touchSurface.setPointerCapture(event.pointerId);
-        const action = event.clientX < touchSurface.getBoundingClientRect().left + touchSurface.clientWidth / 2 ? moveLeft : moveRight;
-        holdDelay = setTimeout(() => {
-            if (!touchStart) return;
-            touchStart.held = true;
-            runTouchAction(action);
-            holdRepeat = setInterval(() => runTouchAction(action), 70);
-        }, 260);
-    });
-
-    touchSurface.addEventListener('pointerup', event => {
-        if (!touchStart || touchStart.id !== event.pointerId || event.target.closest('button')) {
-            touchStart = null;
-            return;
-        }
-
-        stopTouchRepeat();
-        const wasHeld = touchStart.held;
-        const dx = event.clientX - touchStart.x;
-        const dy = event.clientY - touchStart.y;
-        const absX = Math.abs(dx);
-        const absY = Math.abs(dy);
-        touchStart = null;
-
-        if (wasHeld) return;
-
-        if (absX < tapDistance && absY < tapDistance) {
-            const now = performance.now();
-            if (now - lastTapTime < 280) {
-                clearTimeout(tapDelay);
-                lastTapTime = 0;
-                runTouchAction(pieceRotate);
-            } else {
-                lastTapTime = now;
-                const tapX = event.clientX;
-                tapDelay = setTimeout(() => {
-                    const middle = touchSurface.getBoundingClientRect().left + touchSurface.clientWidth / 2;
-                    runTouchAction(tapX < middle ? moveLeft : moveRight);
-                }, 280);
-            }
-            return;
-        }
-
-        if (Math.max(absX, absY) < minSwipeDistance) return;
-
-        if (absX > absY) {
-            runTouchAction(dx > 0 ? moveRight : moveLeft);
-        } else if (dy > 0) {
-            const drops = Math.max(1, Math.min(6, Math.floor(absY / 35)));
-            for (let i = 0; i < drops; i++) runTouchAction(pieceDrop);
+        if (actionName === 'left' || actionName === 'right' || actionName === 'down') {
+            bindRepeatButton(zone, action, actionName === 'down' ? 55 : 70);
         } else {
-            runTouchAction(pieceRotate);
+            bindButton(zone, action);
         }
-    });
-
-    touchSurface.addEventListener('pointercancel', () => {
-        stopTouchRepeat();
-        touchStart = null;
     });
 }
 
@@ -966,7 +922,7 @@ bindButton(btnRotate, () => {
 });
 
 bindPauseButton(btnPause);
-bindSwipeControls();
+bindTapZones();
 applyControlMode(controlMode);
 
 board = createBoard();

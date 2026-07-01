@@ -90,7 +90,7 @@ const btnRotate = document.getElementById('btn-rotate');
 const btnPause = document.getElementById('btn-pause');
 const controlModeDialog = document.getElementById('control-mode-dialog');
 const changeControlModeBtn = document.getElementById('change-control-mode');
-const tapZones = document.getElementById('tap-zones');
+const tapControlPad = document.getElementById('tap-control-pad');
 const mobileQuery = window.matchMedia('(max-width: 680px)');
 let controlMode = localStorage.getItem('tetris-control-mode');
 let startAfterModeSelection = false;
@@ -592,12 +592,11 @@ function togglePause() {
             overlayMsg.innerHTML = `
                 <span>タップ操作ガイド</span>
                 <span class="tap-help">
-                    <span class="wide">↻ 上エリア：回転</span>
-                    <span>← 左エリア：左移動</span>
-                    <span>右エリア：右移動 →</span>
-                    <span class="wide">↓ 下エリア：ソフトドロップ</span>
-                </span>
-                <span class="tap-help-note">ダブルタップ回転は無効です</span>`;
+                    <span class="wide">↻ 上ボタン：回転</span>
+                    <span>← 左ボタン：左移動</span>
+                    <span>右ボタン：右移動 →</span>
+                    <span class="wide">↓ 下ボタン：ソフトドロップ</span>
+                </span>`;
         } else {
             overlayMsg.textContent = "上矢印キーまたはボタンを押してゲームを再開します";
         }
@@ -861,10 +860,10 @@ function runTouchAction(action, allowPaused = false) {
 }
 
 function bindTapZones() {
-    if (!tapZones) return;
+    if (!tapControlPad) return;
 
     const actions = { left: moveLeft, right: moveRight, down: pieceDrop, rotate: pieceRotate };
-    tapZones.querySelectorAll('[data-tap-action]').forEach(zone => {
+    tapControlPad.querySelectorAll('[data-tap-action]').forEach(zone => {
         const actionName = zone.dataset.tapAction;
         const action = actions[actionName];
 

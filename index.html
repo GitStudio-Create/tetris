@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260701-2">
+    <link rel="stylesheet" href="style.css?v=20260701-3">
 </head>
 <body>
     <div class="app-container">
@@ -33,12 +33,13 @@
                         <button id="start-btn">PLAY GAME</button>
                     </div>
                 </div>
-                <div id="tap-zones" class="tap-zones" aria-hidden="true">
-                    <button type="button" class="tap-zone tap-zone-rotate" data-tap-action="rotate" tabindex="-1">↻ 回転</button>
-                    <button type="button" class="tap-zone tap-zone-left" data-tap-action="left" tabindex="-1">← 左</button>
-                    <button type="button" class="tap-zone tap-zone-right" data-tap-action="right" tabindex="-1">右 →</button>
-                    <button type="button" class="tap-zone tap-zone-down" data-tap-action="down" tabindex="-1">↓ ソフトドロップ</button>
-                </div>
+            </div>
+
+            <div id="tap-control-pad" class="tap-control-pad" aria-label="タップ操作盤">
+                <button type="button" class="tap-pad-btn tap-pad-rotate" data-tap-action="rotate" aria-label="回転"><span>↻</span><small>回転</small></button>
+                <button type="button" class="tap-pad-btn tap-pad-left" data-tap-action="left" aria-label="左移動"><span>←</span><small>左</small></button>
+                <button type="button" class="tap-pad-btn tap-pad-down" data-tap-action="down" aria-label="ソフトドロップ"><span>↓</span><small>落下</small></button>
+                <button type="button" class="tap-pad-btn tap-pad-right" data-tap-action="right" aria-label="右移動"><span>→</span><small>右</small></button>
             </div>
 
             <!-- スマホ用仮想コントローラー (CSSでPC時は非表示) -->
@@ -121,6 +122,6 @@
             <button type="button" data-control-mode="tap">タップ操作</button>
         </div>
     </div>
-    <script src="script.js?v=20260701-2"></script>
+    <script src="script.js?v=20260701-3"></script>
 </body>
 </html>

@@ -48,6 +48,8 @@
                 </div>
             </div>
 
+            <button id="change-control-mode" class="change-control-mode" type="button">操作方法を変更</button>
+
             <!-- 情報パネル・サイドバー -->
             <div class="sidebar">
                 <!-- 次のブロック表示 -->
@@ -103,6 +105,15 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <div id="control-mode-dialog" class="control-mode-dialog" role="dialog" aria-modal="true" aria-labelledby="control-mode-title" hidden>
+        <div class="control-mode-card">
+            <h2 id="control-mode-title">操作方法を選択してください</h2>
+            <p>あとから「操作方法を変更」で切り替えられます。</p>
+            <button type="button" data-control-mode="buttons">ボタン操作</button>
+            <button type="button" data-control-mode="tap">タップ操作</button>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>

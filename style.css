@@ -112,9 +112,11 @@ body {
     position: relative;
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 
-                0 0 0 1px var(--panel-border),
-                0 0 30px rgba(0, 242, 254, 0.1);
+    border: 2px solid rgba(218, 247, 255, 0.82);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6),
+                0 0 0 1px rgba(110, 210, 230, 0.3),
+                0 0 18px rgba(185, 238, 255, 0.28),
+                inset 0 0 10px rgba(210, 247, 255, 0.08);
     background-color: var(--board-bg);
 }
 
@@ -313,6 +315,11 @@ body {
     display: none;
 }
 
+.change-control-mode,
+.control-mode-dialog {
+    display: none;
+}
+
 /* レスポンシブ設計 */
 @media (max-width: 680px) {
     body {
@@ -352,7 +359,7 @@ body {
         grid-row: 1 / span 2;
         width: 100%;
         border-radius: 12px;
-        touch-action: manipulation;
+        touch-action: none;
     }
 
     #tetris-board {
@@ -430,6 +437,65 @@ body {
     /* スマホ表示時に仮想コントローラーを表示 */
     .mobile-controls {
         display: contents;
+    }
+
+    body.control-mode-tap .mobile-controls {
+        display: none;
+    }
+
+    .change-control-mode {
+        display: block;
+        grid-column: 2;
+        grid-row: 3;
+        justify-self: center;
+        margin-top: 4px;
+        padding: 0.45rem 0.8rem;
+        border: 1px solid rgba(210, 247, 255, 0.45);
+        border-radius: 999px;
+        background: rgba(12, 18, 26, 0.8);
+        color: #dff9ff;
+        font: 600 0.72rem var(--font-alt);
+        box-shadow: 0 0 12px rgba(180, 235, 255, 0.12);
+    }
+
+    .control-mode-dialog:not([hidden]) {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        background: rgba(5, 5, 10, 0.82);
+        backdrop-filter: blur(10px);
+    }
+
+    .control-mode-card {
+        width: min(330px, 100%);
+        padding: 1.5rem;
+        border: 1px solid rgba(210, 247, 255, 0.65);
+        border-radius: 18px;
+        background: linear-gradient(145deg, rgba(25, 25, 38, 0.98), rgba(9, 12, 18, 0.98));
+        text-align: center;
+        box-shadow: 0 0 28px rgba(130, 225, 255, 0.24);
+    }
+
+    .control-mode-card h2 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+    .control-mode-card p { color: var(--text-secondary); font-size: 0.78rem; margin-bottom: 1rem; }
+    .control-mode-card button {
+        width: 100%;
+        margin-top: 0.65rem;
+        padding: 0.8rem;
+        border: 1px solid rgba(255,255,255,.65);
+        border-radius: 999px;
+        background: linear-gradient(135deg, #00e8f5, #65b9ff);
+        color: #071218;
+        font: 700 1rem var(--font-main);
+    }
+
+    .control-mode-card button[data-control-mode="tap"] {
+        background: linear-gradient(135deg, #ff3aa0, #9c5cff);
+        color: white;
     }
 
     .control-group {

@@ -88,6 +88,11 @@ const btnRight = document.getElementById('btn-right');
 const btnDown = document.getElementById('btn-down');
 const btnRotate = document.getElementById('btn-rotate');
 const btnPause = document.getElementById('btn-pause');
+const controlModeDialog = document.getElementById('control-mode-dialog');
+const changeControlModeBtn = document.getElementById('change-control-mode');
+const mobileQuery = window.matchMedia('(max-width: 680px)');
+let controlMode = localStorage.getItem('tetris-control-mode');
+let startAfterModeSelection = false;
 
 // ----------------------------------------------------
 // 3. ゲームの変数（状態）の定義
@@ -674,6 +679,9 @@ if (window.PointerEvent) {
 startBtn.addEventListener('click', () => {
     if (isPaused) {
         togglePause();
+    } else if (mobileQuery.matches && !controlMode) {
+        startAfterModeSelection = true;
+        showControlModeDialog();
     } else {
         startGame();
     }
@@ -758,11 +766,18 @@ function bindRepeatButton(btnElement, action, repeatMs = 45) {
     };
 
     const startRepeat = event => {
+        if (event.type === 'pointerdown' && event.pointerType === 'touch') return;
         event.preventDefault();
         stopRepeat();
         runAction();
         repeatTimer = setInterval(runAction, repeatMs);
     };
+
+    // Touch events are registered explicitly so releasing or cancelling a touch
+    // always stops repetition, including browsers that also support PointerEvent.
+    btnElement.addEventListener('touchstart', startRepeat, { passive: false });
+    btnElement.addEventListener('touchend', stopRepeat);
+    btnElement.addEventListener('touchcancel', stopRepeat);
 
     if (window.PointerEvent) {
         btnElement.addEventListener('pointerdown', startRepeat);
@@ -770,9 +785,6 @@ function bindRepeatButton(btnElement, action, repeatMs = 45) {
         btnElement.addEventListener('pointercancel', stopRepeat);
         btnElement.addEventListener('pointerleave', stopRepeat);
     } else {
-        btnElement.addEventListener('touchstart', startRepeat);
-        btnElement.addEventListener('touchend', stopRepeat);
-        btnElement.addEventListener('touchcancel', stopRepeat);
         btnElement.addEventListener('mousedown', startRepeat);
         btnElement.addEventListener('mouseup', stopRepeat);
         btnElement.addEventListener('mouseleave', stopRepeat);
@@ -824,18 +836,37 @@ function bindSwipeControls() {
     if (!touchSurface || !window.PointerEvent) return;
 
     const minSwipeDistance = 30;
-    const tapDistance = 10;
+    const tapDistance = 14;
     let touchStart = null;
+    let holdDelay = null;
+    let holdRepeat = null;
+    let tapDelay = null;
+    let lastTapTime = 0;
+
+    const stopTouchRepeat = () => {
+        clearTimeout(holdDelay);
+        clearInterval(holdRepeat);
+        holdDelay = null;
+        holdRepeat = null;
+    };
 
     touchSurface.addEventListener('pointerdown', event => {
-        if (event.pointerType !== 'touch' || event.target.closest('button')) return;
+        if (event.pointerType !== 'touch' || event.target.closest('button') || controlMode !== 'tap') return;
 
         touchStart = {
             id: event.pointerId,
             x: event.clientX,
-            y: event.clientY
+            y: event.clientY,
+            held: false
         };
         touchSurface.setPointerCapture(event.pointerId);
+        const action = event.clientX < touchSurface.getBoundingClientRect().left + touchSurface.clientWidth / 2 ? moveLeft : moveRight;
+        holdDelay = setTimeout(() => {
+            if (!touchStart) return;
+            touchStart.held = true;
+            runTouchAction(action);
+            holdRepeat = setInterval(() => runTouchAction(action), 70);
+        }, 260);
     });
 
     touchSurface.addEventListener('pointerup', event => {
@@ -844,14 +875,30 @@ function bindSwipeControls() {
             return;
         }
 
+        stopTouchRepeat();
+        const wasHeld = touchStart.held;
         const dx = event.clientX - touchStart.x;
         const dy = event.clientY - touchStart.y;
         const absX = Math.abs(dx);
         const absY = Math.abs(dy);
         touchStart = null;
 
+        if (wasHeld) return;
+
         if (absX < tapDistance && absY < tapDistance) {
-            runTouchAction(pieceRotate);
+            const now = performance.now();
+            if (now - lastTapTime < 280) {
+                clearTimeout(tapDelay);
+                lastTapTime = 0;
+                runTouchAction(pieceRotate);
+            } else {
+                lastTapTime = now;
+                const tapX = event.clientX;
+                tapDelay = setTimeout(() => {
+                    const middle = touchSurface.getBoundingClientRect().left + touchSurface.clientWidth / 2;
+                    runTouchAction(tapX < middle ? moveLeft : moveRight);
+                }, 280);
+            }
             return;
         }
 
@@ -860,23 +907,53 @@ function bindSwipeControls() {
         if (absX > absY) {
             runTouchAction(dx > 0 ? moveRight : moveLeft);
         } else if (dy > 0) {
-            runTouchAction(pieceDrop);
+            const drops = Math.max(1, Math.min(6, Math.floor(absY / 35)));
+            for (let i = 0; i < drops; i++) runTouchAction(pieceDrop);
         } else {
-            runTouchAction(togglePause, true);
+            runTouchAction(pieceRotate);
         }
     });
 
     touchSurface.addEventListener('pointercancel', () => {
+        stopTouchRepeat();
         touchStart = null;
     });
 }
 
+function applyControlMode(mode) {
+    controlMode = mode;
+    document.body.classList.toggle('control-mode-tap', mode === 'tap');
+    document.body.classList.toggle('control-mode-buttons', mode === 'buttons');
+    if (mode) localStorage.setItem('tetris-control-mode', mode);
+}
+
+function showControlModeDialog() {
+    if (!mobileQuery.matches) return;
+    controlModeDialog.hidden = false;
+}
+
+controlModeDialog.querySelectorAll('[data-control-mode]').forEach(button => {
+    button.addEventListener('click', () => {
+        applyControlMode(button.dataset.controlMode);
+        controlModeDialog.hidden = true;
+        if (startAfterModeSelection) {
+            startAfterModeSelection = false;
+            startGame();
+        }
+    });
+});
+
+changeControlModeBtn.addEventListener('click', () => {
+    startAfterModeSelection = false;
+    showControlModeDialog();
+});
+
 // 各スマホ仮想キーにテトリスアクションを紐付け
-bindButton(btnLeft, () => {
+bindRepeatButton(btnLeft, () => {
     moveLeft();
 });
 
-bindButton(btnRight, () => {
+bindRepeatButton(btnRight, () => {
     moveRight();
 });
 
@@ -889,6 +966,8 @@ bindButton(btnRotate, () => {
 });
 
 bindPauseButton(btnPause);
+bindSwipeControls();
+applyControlMode(controlMode);
 
 board = createBoard();
 draw();

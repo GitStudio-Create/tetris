@@ -92,10 +92,16 @@ const controlModeDialog = document.getElementById('control-mode-dialog');
 const changeControlModeBtn = document.getElementById('change-control-mode');
 const tapControlPad = document.getElementById('tap-control-pad');
 const mobileQuery = window.matchMedia('(max-width: 680px)');
-let controlMode = localStorage.getItem('tetris-control-mode');
+let controlMode = normalizeControlMode(localStorage.getItem('tetris-control-mode'));
 let startAfterModeSelection = false;
 const HIGH_SCORE_KEY = 'neonTetrisHighScore';
 const LEGACY_HIGH_SCORE_KEY = 'tetris-high-score';
+
+function normalizeControlMode(mode) {
+    if (mode === 'tap' || mode === 'buttons2') return 'buttons2';
+    if (mode === 'buttons' || mode === 'buttons1') return 'buttons1';
+    return null;
+}
 
 // ----------------------------------------------------
 // 3. ゲームの変数（状態）の定義
@@ -588,14 +594,14 @@ function togglePause() {
 
     if (isPaused) {
         overlayTitle.textContent = "PAUSED";
-        if (mobileQuery.matches && controlMode === 'tap') {
+        if (mobileQuery.matches && controlMode === 'buttons2') {
             overlayMsg.innerHTML = `
-                <span>タップ操作ガイド</span>
+                <span>操作ガイド</span>
                 <span class="tap-help">
                     <span class="wide">↻ 上ボタン：回転</span>
                     <span>← 左ボタン：左移動</span>
                     <span>右ボタン：右移動 →</span>
-                    <span class="wide">↓ 下ボタン：ソフトドロップ</span>
+                    <span class="wide">↓ 下ボタン：落下</span>
                 </span>`;
         } else {
             overlayMsg.textContent = "上矢印キーまたはボタンを押してゲームを再開します";
@@ -774,13 +780,16 @@ function bindButton(btnElement, action) {
 function bindRepeatButton(btnElement, action, repeatMs = 45) {
     if (!btnElement) return;
 
+    let repeatDelayTimer = null;
     let repeatTimer = null;
+    let isPressing = false;
 
     const stopRepeat = () => {
-        if (repeatTimer) {
-            clearInterval(repeatTimer);
-            repeatTimer = null;
-        }
+        isPressing = false;
+        clearTimeout(repeatDelayTimer);
+        clearInterval(repeatTimer);
+        repeatDelayTimer = null;
+        repeatTimer = null;
     };
 
     const runAction = () => {
@@ -795,10 +804,15 @@ function bindRepeatButton(btnElement, action, repeatMs = 45) {
 
     const startRepeat = event => {
         if (event.type === 'pointerdown' && event.pointerType === 'touch') return;
+        if (event.type === 'mousedown' && window.PointerEvent) return;
         event.preventDefault();
         stopRepeat();
+        isPressing = true;
         runAction();
-        repeatTimer = setInterval(runAction, repeatMs);
+        repeatDelayTimer = setTimeout(() => {
+            if (!isPressing) return;
+            repeatTimer = setInterval(runAction, repeatMs);
+        }, 200);
     };
 
     // Touch events are registered explicitly so releasing or cancelling a touch
@@ -806,6 +820,9 @@ function bindRepeatButton(btnElement, action, repeatMs = 45) {
     btnElement.addEventListener('touchstart', startRepeat, { passive: false });
     btnElement.addEventListener('touchend', stopRepeat);
     btnElement.addEventListener('touchcancel', stopRepeat);
+    btnElement.addEventListener('mouseup', stopRepeat);
+    btnElement.addEventListener('mouseleave', stopRepeat);
+    window.addEventListener('blur', stopRepeat);
 
     if (window.PointerEvent) {
         btnElement.addEventListener('pointerdown', startRepeat);
@@ -814,8 +831,6 @@ function bindRepeatButton(btnElement, action, repeatMs = 45) {
         btnElement.addEventListener('pointerleave', stopRepeat);
     } else {
         btnElement.addEventListener('mousedown', startRepeat);
-        btnElement.addEventListener('mouseup', stopRepeat);
-        btnElement.addEventListener('mouseleave', stopRepeat);
     }
 }
 
@@ -876,10 +891,10 @@ function bindTapZones() {
 }
 
 function applyControlMode(mode) {
-    controlMode = mode;
-    document.body.classList.toggle('control-mode-tap', mode === 'tap');
-    document.body.classList.toggle('control-mode-buttons', mode === 'buttons');
-    if (mode) localStorage.setItem('tetris-control-mode', mode);
+    controlMode = normalizeControlMode(mode);
+    document.body.classList.toggle('control-mode-buttons2', controlMode === 'buttons2');
+    document.body.classList.toggle('control-mode-buttons1', controlMode === 'buttons1');
+    if (controlMode) localStorage.setItem('tetris-control-mode', controlMode);
 }
 
 function showControlModeDialog() {

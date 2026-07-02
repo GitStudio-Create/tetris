@@ -439,17 +439,17 @@ body {
         display: contents;
     }
 
-    body.control-mode-tap .mobile-controls {
+    body.control-mode-buttons2 .mobile-controls {
         display: contents;
     }
 
-    body.control-mode-tap .movement-group,
-    body.control-mode-tap #btn-down,
-    body.control-mode-tap #btn-right {
+    body.control-mode-buttons2 .movement-group,
+    body.control-mode-buttons2 #btn-down,
+    body.control-mode-buttons2 #btn-right {
         display: none;
     }
 
-    body.control-mode-tap .action-group {
+    body.control-mode-buttons2 .action-group {
         grid-column: 3;
         grid-row: 1;
         align-self: start;
@@ -457,12 +457,12 @@ body {
         z-index: 12;
     }
 
-    body.control-mode-tap .btn-pause {
+    body.control-mode-buttons2 .btn-pause {
         display: flex;
         margin: 0;
     }
 
-    body.control-mode-tap .tap-control-pad {
+    body.control-mode-buttons2 .tap-control-pad {
         display: grid;
         grid-column: 2;
         grid-row: 3;
@@ -573,7 +573,7 @@ body {
         font: 700 1rem var(--font-main);
     }
 
-    .control-mode-card button[data-control-mode="tap"] {
+    .control-mode-card button[data-control-mode="buttons2"] {
         background: linear-gradient(135deg, #ff3aa0, #9c5cff);
         color: white;
     }
